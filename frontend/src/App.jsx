@@ -1,94 +1,89 @@
 import { useState, useEffect } from "react";
 
 function App() {
-  const [todos, setTodos] = useState([]);
-  const [text, setText] = useState("");
+  const [players, setPlayers] = useState([]);
+  const [name, setName] = useState("");
+  const [scores, setScores] = useState({ game1: 0, game2: 0, game3: 0 });
 
-  // ✅ Use your backend URL from env OR fallback to Render URL
-  const API = import.meta.env.VITE_API_URL || "https://fullstack-app-rdkt.onrender.com";
-
-  // ✅ Fetch todos once on load
+  // Fetch players on load
   useEffect(() => {
-    fetchTodos();
+    fetch("https://fullstack-app-rdkt.onrender.com/players")
+      .then(res => res.json())
+      .then(data => setPlayers(data));
   }, []);
 
-  async function fetchTodos() {
-    const res = await fetch(`${API}/todos`);
-    const data = await res.json();
-    setTodos(data);
-  }
-
-  // ✅ Only one addTodo
-  const addTodo = async () => {
-    if (!text.trim()) return;
-
-    const res = await fetch(`${API}/todos`, {
+  async function addPlayer() {
+    if (!name.trim()) return;
+    const res = await fetch("https://fullstack-app-rdkt.onrender.com/players", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ name, ...scores })
     });
+    const newPlayer = await res.json();
+    setPlayers([...players, newPlayer]);
+    setName("");
+    setScores({ game1: 0, game2: 0, game3: 0 });
+  }
 
-    const newTodo = await res.json();
-    setTodos([...todos, newTodo]);
-    setText("");
-  };
-
-  const toggleTodo = async (id, done) => {
-    const res = await fetch(`${API}/todos/${id}`, {
+  async function updatePlayer(id, game1, game2, game3) {
+    const res = await fetch(`https://fullstack-app-rdkt.onrender.com/players/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: !done }),
+      body: JSON.stringify({ game1, game2, game3 })
     });
     const updated = await res.json();
-    setTodos(todos.map(todo => (todo._id === id ? updated : todo)));
-  };
+    setPlayers(players.map(p => (p._id === id ? updated : p)));
+  }
 
-  const deleteTodo = async (id) => {
-    await fetch(`${API}/todos/${id}`, { method: "DELETE" });
-    setTodos(todos.filter(todo => todo._id !== id));
-  };
+  async function deletePlayer(id) {
+    await fetch(`https://fullstack-app-rdkt.onrender.com/players/${id}`, { method: "DELETE" });
+    setPlayers(players.filter(p => p._id !== id));
+  }
 
   return (
     <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Todo App</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">Player Scores</h1>
 
-      {/* Input + Add button */}
-      <div className="flex mb-6">
+      {/* Add player form */}
+      <div className="mb-6">
         <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Enter a todo"
-          className="flex-1 px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Enter player name"
+          className="border px-3 py-2 rounded mr-2"
         />
-        <button
-          onClick={addTodo}
-          className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
-        >
+        <input
+          type="number"
+          value={scores.game1}
+          onChange={e => setScores({ ...scores, game1: Number(e.target.value) })}
+          placeholder="Game 1"
+          className="w-20 border px-2 py-2 mr-2"
+        />
+        <input
+          type="number"
+          value={scores.game2}
+          onChange={e => setScores({ ...scores, game2: Number(e.target.value) })}
+          placeholder="Game 2"
+          className="w-20 border px-2 py-2 mr-2"
+        />
+        <input
+          type="number"
+          value={scores.game3}
+          onChange={e => setScores({ ...scores, game3: Number(e.target.value) })}
+          placeholder="Game 3"
+          className="w-20 border px-2 py-2 mr-2"
+        />
+        <button onClick={addPlayer} className="bg-blue-500 text-white px-4 py-2 rounded">
           Add
         </button>
       </div>
 
-      {/* Todo list */}
+      {/* Player list */}
       <ul className="space-y-3">
-        {todos.map(todo => (
-          <li
-            key={todo._id}
-            className="flex items-center justify-between bg-white p-3 rounded-lg shadow"
-          >
-            <span
-              onClick={() => toggleTodo(todo._id, todo.done)}
-              className={`flex-1 cursor-pointer ${
-                todo.done ? "line-through text-gray-400" : ""
-              }`}
-            >
-              {todo.text}
-            </span>
-            <button
-              onClick={() => deleteTodo(todo._id)}
-              className="text-red-500 hover:text-red-700 ml-3"
-            >
-              🗑
-            </button>
+        {players.map(player => (
+          <li key={player._id} className="flex items-center justify-between bg-white p-3 rounded shadow">
+            <span>{player.name} - G1:{player.game1} G2:{player.game2} G3:{player.game3}</span>
+            <button onClick={() => deletePlayer(player._id)} className="text-red-500">🗑</button>
           </li>
         ))}
       </ul>

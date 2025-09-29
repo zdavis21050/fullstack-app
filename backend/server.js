@@ -57,3 +57,35 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+const Player = require("./models/Player");
+
+// Get all players
+app.get("/players", async (req, res) => {
+  const players = await Player.find();
+  res.json(players);
+});
+
+// Add a player
+app.post("/players", async (req, res) => {
+  const { name, game1, game2, game3 } = req.body;
+  const player = new Player({ name, game1, game2, game3 });
+  await player.save();
+  res.json(player);
+});
+
+// Update a player’s scores
+app.put("/players/:id", async (req, res) => {
+  const { game1, game2, game3 } = req.body;
+  const updated = await Player.findByIdAndUpdate(
+    req.params.id,
+    { game1, game2, game3 },
+    { new: true }
+  );
+  res.json(updated);
+});
+
+// Delete a player
+app.delete("/players/:id", async (req, res) => {
+  await Player.findByIdAndDelete(req.params.id);
+  res.json({ message: "Player deleted" });
+});
