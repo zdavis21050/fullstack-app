@@ -4,44 +4,37 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [text, setText] = useState("");
 
+  // ✅ Use your backend URL from env OR fallback to Render URL
+  const API = import.meta.env.VITE_API_URL || "https://fullstack-app-rdkt.onrender.com";
+
+  // ✅ Fetch todos once on load
   useEffect(() => {
-    fetch("http://localhost:5000/todos")
-      .then(res => res.json())
-      .then(data => setTodos(data));
+    fetchTodos();
   }, []);
 
-const API = import.meta.env.VITE_API_URL;
+  async function fetchTodos() {
+    const res = await fetch(`${API}/todos`);
+    const data = await res.json();
+    setTodos(data);
+  }
 
-async function fetchTodos() {
-  const res = await fetch(`${API}/todos`);
-  const data = await res.json();
-  setTodos(data);
-}
-
-async function addTodo() {
-  await fetch(`${API}/todos`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: newTodo })
-  });
-  setNewTodo('');
-  fetchTodos();
-}
-
+  // ✅ Only one addTodo
   const addTodo = async () => {
     if (!text.trim()) return;
-    const res = await fetch("http://localhost:5000/todos", {
+
+    const res = await fetch(`${API}/todos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
+
     const newTodo = await res.json();
     setTodos([...todos, newTodo]);
     setText("");
   };
 
   const toggleTodo = async (id, done) => {
-    const res = await fetch(`http://localhost:5000/todos/${id}`, {
+    const res = await fetch(`${API}/todos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ done: !done }),
@@ -51,7 +44,7 @@ async function addTodo() {
   };
 
   const deleteTodo = async (id) => {
-    await fetch(`http://localhost:5000/todos/${id}`, { method: "DELETE" });
+    await fetch(`${API}/todos/${id}`, { method: "DELETE" });
     setTodos(todos.filter(todo => todo._id !== id));
   };
 
