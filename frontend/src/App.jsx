@@ -10,6 +10,24 @@ function App() {
       .then(data => setTodos(data));
   }, []);
 
+const API = import.meta.env.VITE_API_URL;
+
+async function fetchTodos() {
+  const res = await fetch(`${API}/todos`);
+  const data = await res.json();
+  setTodos(data);
+}
+
+async function addTodo() {
+  await fetch(`${API}/todos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: newTodo })
+  });
+  setNewTodo('');
+  fetchTodos();
+}
+
   const addTodo = async () => {
     if (!text.trim()) return;
     const res = await fetch("http://localhost:5000/todos", {
